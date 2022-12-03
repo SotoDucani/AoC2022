@@ -1,3 +1,3 @@
-module github.com/SotoDucani/AoC2021
+module github.com/SotoDucani/AoC2022
 
-go 1.17
+go 1.19

@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	read "github.com/SotoDucani/AoC2021/internal/read"
+	read "github.com/SotoDucani/AoC2022/internal/read"
 )
 
 func part1() {
