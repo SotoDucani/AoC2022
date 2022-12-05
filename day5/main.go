@@ -121,12 +121,6 @@ func part1() {
 		finalString = finalString + curChar
 	}
 
-	//Doesn't work, wtf
-	//for _, stack := range stacks {
-	//	curChar, _ := stack.Pop()
-	//	finalString = finalString + curChar
-	//}
-
 	fmt.Printf("Part 1 - Top Crates: %v\n", finalString)
 }
 
@@ -249,12 +243,6 @@ func part2() {
 		curChar, _ := curStack.Pop()
 		finalString = finalString + curChar
 	}
-
-	//Doesn't work, wtf
-	//for _, stack := range stacks {
-	//	curChar, _ := stack.Pop()
-	//	finalString = finalString + curChar
-	//}
 
 	fmt.Printf("Part 2 - Top Crates: %v\n", finalString)
 }
