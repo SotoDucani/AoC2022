@@ -10,39 +10,40 @@ import (
 )
 
 func part1() {
-	array := read.ReadStrArrayByLine("./exinput.txt")
+	array := read.ReadStrArrayByLine("./input.txt")
 
 	x := 1
 	scanner := 0
-	nextInst := 0
+	instructionStack := read.Stack{}
 	cycle := 1
 	sigStrengthSum := 0
-	for line := 0; line < len(array); line++ {
-		var curInst int
-		curInst = nextInst
-		// Instruction parse
-		if array[line] != "noop" {
-			incVal, _ := strconv.Atoi(strings.Split(array[line], " ")[1])
-			nextInst = incVal
-		} else {
-			nextInst = 0
-		}
 
-		// Measure Current Value
+	for _, line := range array {
+		//Read
+		lineSplit := strings.Split(line, " ")
+		if lineSplit[0] == "noop" {
+			instructionStack.Insert("0", 0)
+		} else {
+			instructionStack.Insert("0", 0)
+			instructionStack.Insert(lineSplit[1], 0)
+		}
+	}
+
+	for ok := true; ok; ok = (len(instructionStack) > 0) {
+		// Measure value for cycle
 		//fmt.Printf("Cycle: %v; X Val: %v\n", cycle, x)
 		if cycle == 20 || cycle == (20+(40*scanner)) {
 			scanner += 1
-			fmt.Printf("Cycle: %v; X Val: %v\n", cycle, x)
-			sigStrengthSum += x * (20 + (40 * scanner))
+			//fmt.Printf("Cycle: %v; X Val: %v\n", cycle, x)
+			sigStrengthSum += x * cycle
 		}
 
-		if array[line] != "noop" {
-			cycle += 1
+		// Process Instruction
+		cur, hadValue := instructionStack.Pop()
+		if hadValue {
+			curInt, _ := strconv.Atoi(cur)
+			x += curInt
 		}
-
-		// Process instruction
-		//fmt.Printf("Finished command: %v\n", curInst)
-		x = x + curInst
 		cycle += 1
 	}
 
@@ -50,9 +51,57 @@ func part1() {
 }
 
 func part2() {
-	//array := read.ReadStrArrayByLine("./input.txt")
+	array := read.ReadStrArrayByLine("./input.txt")
 
-	//fmt.Printf("Part 2 - String: %v\n", var)
+	var resultArray []string
+
+	x := 1
+	scanner := 1
+	instructionStack := read.Stack{}
+	cycle := 1
+	crtPos := 0
+
+	for _, line := range array {
+		//Read
+		lineSplit := strings.Split(line, " ")
+		if lineSplit[0] == "noop" {
+			instructionStack.Insert("0", 0)
+		} else {
+			instructionStack.Insert("0", 0)
+			instructionStack.Insert(lineSplit[1], 0)
+		}
+	}
+
+	curCRTLine := ""
+	for ok := true; ok; ok = (len(instructionStack) > 0) {
+		if crtPos == x-1 || crtPos == x || crtPos == x+1 {
+			curCRTLine = curCRTLine + "X"
+		} else {
+			curCRTLine = curCRTLine + "."
+		}
+
+		// Process Instruction
+		cur, hadValue := instructionStack.Pop()
+		if hadValue {
+			curInt, _ := strconv.Atoi(cur)
+			x += curInt
+		}
+
+		crtPos += 1
+		// Inc CRT Line
+		if cycle == (40 * scanner) {
+			scanner += 1
+			crtPos = 0
+			resultArray = append(resultArray, curCRTLine)
+			curCRTLine = ""
+		}
+		cycle += 1
+
+	}
+
+	for _, line := range resultArray {
+		fmt.Printf("%v\n", line)
+	}
 }
 
 func main() {
