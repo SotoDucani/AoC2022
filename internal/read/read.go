@@ -31,6 +31,15 @@ func (s *Stack) Pop() (string, bool) {
 	}
 }
 
+func (s *Stack) Insert(str string, pos int) {
+	var stk []string
+	stk = *s
+	stk = append(stk, "")
+	copy(stk[pos+1:], stk[pos:])
+	stk[pos] = str
+	*s = stk
+}
+
 func SliceContains(s []string, str string) bool {
 	for _, v := range s {
 		if v == str {
