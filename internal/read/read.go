@@ -7,6 +7,24 @@ import (
 	"strings"
 )
 
+func IntSliceInsert(targetStack []int, num int, pos int) []int {
+	targetStack = append(targetStack, 0)
+	copy(targetStack[pos+1:], targetStack[pos:])
+	targetStack[pos] = num
+	return targetStack
+}
+
+func IntSlicePop(targetStack []int) ([]int, int, bool) {
+	if len(targetStack) == 0 {
+		return targetStack, 0, false
+	} else {
+		index := len(targetStack) - 1       // Get the index of the top most element.
+		element := (targetStack)[index]     // Index into the slice and obtain the element.
+		targetStack = (targetStack)[:index] // Remove it from the stack by slicing it off.
+		return targetStack, element, true
+	}
+}
+
 type Stack []string
 
 // IsEmpty: check if stack is empty
