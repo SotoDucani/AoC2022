@@ -70,13 +70,13 @@ func draw(tailVisitedLocations map[string]int) {
 		drawnMap = append(drawnMap, curLine)
 	}
 
-	for _, line := range drawnMap {
-		curLine := ""
-		for _, char := range line {
-			curLine = curLine + char
-		}
-		fmt.Printf("%s\n", curLine)
-	}
+	//for _, line := range drawnMap {
+	//	curLine := ""
+	//	for _, char := range line {
+	//		curLine = curLine + char
+	//	}
+	//	fmt.Printf("%s\n", curLine)
+	//}
 
 	for pair, _ := range tailVisitedLocations {
 		split := strings.Split(pair, ",")
