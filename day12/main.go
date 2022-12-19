@@ -11,6 +11,7 @@ import (
 	"time"
 
 	read "github.com/SotoDucani/AoC2022/internal/read"
+	"github.com/fatih/color"
 )
 
 func Insert(stk []string, str string, pos int) []string {
@@ -278,9 +279,10 @@ func drawMap(filename string, finalNode *Node) {
 
 	var drawnMap [][]string
 	for y := 0; y < len(array); y++ {
+		curLine := read.StrToCharArray(array[y])
 		var line []string
-		for x := 0; x < len(array[y]); x++ {
-			line = append(line, ".")
+		for x := 0; x < len(curLine); x++ {
+			line = append(line, curLine[x])
 		}
 		drawnMap = append(drawnMap, line)
 	}
@@ -289,7 +291,8 @@ func drawMap(filename string, finalNode *Node) {
 		split := strings.Split(n.name, ",")
 		x, _ := strconv.Atoi(split[0])
 		y, _ := strconv.Atoi(split[1])
-		drawnMap[y][x] = "X"
+		existingChar := drawnMap[y][x]
+		drawnMap[y][x] = color.HiGreenString(existingChar)
 	}
 
 	cmd := exec.Command("cmd", "/c", "cls")
@@ -317,10 +320,8 @@ func part1() {
 	intMap := processInput("./input.txt")
 	graph := setupGraph(intMap, startNodeName, destNodeName)
 
-	// Hardcoded Start Node Name
 	dijkstras(graph, startNodeName, destNodeName)
 
-	// HardCoded End Node Name
 	steps := 0
 	var finalNode *Node
 	for _, node := range graph.Nodes {
