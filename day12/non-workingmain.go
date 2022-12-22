@@ -1,5 +1,6 @@
 package main
 
+/*
 import (
 	"fmt"
 	"math"
@@ -25,9 +26,10 @@ func Insert(stk []string, str string, pos int) []string {
 // Literally have never written this from scratch before
 
 type Node struct {
-	name     string
-	distance int
-	through  *Node
+	name    string
+	value   int
+	through *Node
+	eucDist float64
 }
 
 type Edge struct {
@@ -73,7 +75,7 @@ func (h *Heap) Push(element *Node) {
 	defer h.mutex.Unlock()
 	h.elements = append(h.elements, element)
 	i := len(h.elements) - 1
-	for ; h.elements[i].distance < h.elements[parent(i)].distance; i = parent(i) {
+	for ; h.elements[i].eucDist < h.elements[parent(i)].eucDist; i = parent(i) {
 		h.swap(i, parent(i))
 	}
 }
@@ -81,10 +83,10 @@ func (h *Heap) Push(element *Node) {
 func (h *Heap) rearrange(i int) {
 	smallest := i
 	left, right, size := leftChild(i), rightChild(i), len(h.elements)
-	if left < size && h.elements[left].distance < h.elements[smallest].distance {
+	if left < size && h.elements[left].eucDist < h.elements[smallest].eucDist {
 		smallest = left
 	}
-	if right < size && h.elements[right].distance < h.elements[smallest].distance {
+	if right < size && h.elements[right].eucDist < h.elements[smallest].eucDist {
 		smallest = right
 	}
 	if smallest != i {
@@ -129,7 +131,7 @@ func (g *WeightedGraph) AddNode(n *Node) {
 func AddNodes(g *WeightedGraph, names ...string) (nodes map[string]*Node) {
 	nodes = make(map[string]*Node)
 	for _, name := range names {
-		n := &Node{name, math.MaxInt, nil}
+		n := &Node{name, math.MaxInt, nil, math.MaxInt}
 		g.AddNode(n)
 		nodes[name] = n
 	}
@@ -139,9 +141,8 @@ func AddNodes(g *WeightedGraph, names ...string) (nodes map[string]*Node) {
 func (g *WeightedGraph) AddEdge(n1, n2 *Node, weight int) {
 	g.mutex.Lock()
 	defer g.mutex.Unlock()
-
+	// Change from the article; Only adding weights in one direction
 	g.Edges[n1.name] = append(g.Edges[n1.name], &Edge{n2, weight})
-	g.Edges[n2.name] = append(g.Edges[n2.name], &Edge{n1, weight})
 }
 
 func processInput(filename string) [][]int {
@@ -191,30 +192,47 @@ func setupGraph(intMap [][]int, startNodeName string, destNodeName string) *Weig
 	for y := 0; y < len(intMap); y++ {
 		for x := 0; x < len(intMap[y]); x++ {
 			if y-1 >= 0 {
+				weight := intMap[y-1][x] - intMap[y][x]
 				curNodeName := fmt.Sprintf("%d,%d", x, y)
 				nextNodeName := fmt.Sprintf("%d,%d", x, y-1)
 				//fmt.Printf("Weight from %s to %s: %d\n", curNodeName, nextNodeName, weight)
-				graph.AddEdge(nodes[curNodeName], nodes[nextNodeName], 1)
+				graph.AddEdge(nodes[curNodeName], nodes[nextNodeName], weight)
 			}
 			if y+1 < len(intMap) {
+				weight := intMap[y+1][x] - intMap[y][x]
 				curNodeName := fmt.Sprintf("%d,%d", x, y)
 				nextNodeName := fmt.Sprintf("%d,%d", x, y+1)
 				//fmt.Printf("Weight from %s to %s: %d\n", curNodeName, nextNodeName, weight)
-				graph.AddEdge(nodes[curNodeName], nodes[nextNodeName], 1)
+				graph.AddEdge(nodes[curNodeName], nodes[nextNodeName], weight)
 			}
 			if x-1 >= 0 {
+				weight := intMap[y][x-1] - intMap[y][x]
 				curNodeName := fmt.Sprintf("%d,%d", x, y)
 				nextNodeName := fmt.Sprintf("%d,%d", x-1, y)
 				//fmt.Printf("Weight from %s to %s: %d\n", curNodeName, nextNodeName, weight)
-				graph.AddEdge(nodes[curNodeName], nodes[nextNodeName], 1)
+				graph.AddEdge(nodes[curNodeName], nodes[nextNodeName], weight)
 			}
 			if x+1 < len(intMap[y]) {
+				weight := intMap[y][x+1] - intMap[y][x]
 				curNodeName := fmt.Sprintf("%d,%d", x, y)
 				nextNodeName := fmt.Sprintf("%d,%d", x+1, y)
 				//fmt.Printf("Weight from %s to %s: %d\n", curNodeName, nextNodeName, weight)
-				graph.AddEdge(nodes[curNodeName], nodes[nextNodeName], 1)
+				graph.AddEdge(nodes[curNodeName], nodes[nextNodeName], weight)
 			}
 		}
+	}
+
+	// Euclidean distance for min heap
+	destNodeNameSplit := strings.Split(destNodeName, ",")
+	destX, _ := strconv.Atoi(destNodeNameSplit[0])
+	destY, _ := strconv.Atoi(destNodeNameSplit[1])
+	for _, node := range nodes {
+		nodeNameSplit := strings.Split(node.name, ",")
+		nodeX, _ := strconv.Atoi(nodeNameSplit[0])
+		nodeY, _ := strconv.Atoi(nodeNameSplit[1])
+
+		// squareroot of ((y1-x1)^2) + ((y2-x2)^2)
+		node.eucDist = math.Sqrt(math.Pow((float64(destX)-float64(nodeX)), 2) + math.Pow((float64(destY)-float64(nodeY)), 2))
 	}
 
 	return graph
@@ -225,20 +243,31 @@ func dijkstras(graph *WeightedGraph, startingNodeName string, destNodeName strin
 	heap := &Heap{}
 
 	startNode := graph.GetNode(startingNodeName)
-	startNode.distance = 0
+	startNode.value = 0
 	heap.Push(startNode)
 
 	for heap.Size() > 0 {
 		current := heap.Pop()
 		visited[current.name] = true
 		edges := graph.Edges[current.name]
+		if current.name == destNodeName {
+			break
+		}
 		for _, edge := range edges {
 			// Modified to not allow weights over 1
 			if !visited[edge.node.name] && edge.weight <= 1 {
 				//fmt.Printf("Visited: %s\n", edge.node.name)
+				// Make nodes cost something
+				var totalWeight int
+				if edge.weight < 0 {
+					totalWeight = 1
+				} else {
+					totalWeight = edge.weight + 1
+				}
+
 				heap.Push(edge.node)
-				if current.distance+1 < edge.node.distance {
-					edge.node.distance = current.distance + 1
+				if current.value+totalWeight < edge.node.value {
+					edge.node.value = current.value + totalWeight
 					edge.node.through = current
 				}
 			}
@@ -299,7 +328,7 @@ func part1() {
 	for _, node := range graph.Nodes {
 		if node.name == destNodeName {
 			finalNode = node
-			//fmt.Printf("Shortest weight from %s to %s is %d\n", "0,0", node.name, node.distance)
+			//fmt.Printf("Shortest weight from %s to %s is %d\n", "0,0", node.name, node.value)
 			for n := node; n.through != nil; n = n.through {
 				fmt.Print(n.name, " <- ")
 				steps += 1
@@ -329,3 +358,4 @@ func main() {
 	part2Time := p2a.Sub(mid)
 	fmt.Printf("Part 1 Time: %dμs\nPart 2 Time: %dμs\n", part1Time.Microseconds(), part2Time.Microseconds())
 }
+*/
